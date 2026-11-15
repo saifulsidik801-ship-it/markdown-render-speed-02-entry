@@ -977,6 +977,23 @@ function textRunEnd(s, hasAt) {
   while ((m = TEXT_STOP.exec(s)) !== null) {
     const q = m.index;
     const hit = m[0];
+    if (hit === '!') {
+      // Only ![ can start an image; a ! on its own is plain text.
+      if (s[q + 1] === '[') return q;
+      TEXT_STOP.lastIndex = q + 1;
+      continue;
+    }
+    if (hit === '*' || hit === '_' || hit === '~') {
+      // A delimiter run followed by whitespace (or the end) cannot open
+      // emphasis or strikethrough, so it is plain text; the closer, if
+      // any, is found by the emphasis scan itself, not by this run.
+      const nx = s[q + 1];
+      if (nx === undefined || nx === ' ' || nx === '\t' || nx === '\n' || nx === '\r' || nx === '\f' || nx === '\v') {
+        TEXT_STOP.lastIndex = q + 1;
+        continue;
+      }
+      return q;
+    }
     if (hit === 'www.') {
       if (q === 0 || isWwwPrev(s[q - 1])) return q;
       TEXT_STOP.lastIndex = q + 4;
